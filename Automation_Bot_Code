@@ -3,14 +3,15 @@ from vex import *
 import urandom
 
 # Brain should be defined by default
-brain=Brain()
+brain = Brain()
 
-# Robot configuration code
+# Configure the line sensor on 3-wire port A
+line_sensor = Line(brain.three_wire_port.a)
 
+# Robot configuration code (other devices should be configured here if needed)
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
-
 
 # Make random actually random
 def initializeRandomSeed():
@@ -20,7 +21,6 @@ def initializeRandomSeed():
       
 # Set random seed 
 initializeRandomSeed()
-
 
 def play_vexcode_sound(sound_name):
     # Helper to make playing sounds from the V5 in VEXcode easier and
@@ -51,6 +51,7 @@ from vex import *
 myVariable = 0
 message1 = Event()
 
+# Function: Moves robot forward if an object is detected in front
 def forward():
     global myVariable, message1
     wait(0.1, SECONDS)
@@ -60,8 +61,8 @@ def forward():
             wait(0.1, SECONDS)
             drivetrain.drive_for(FORWARD, 24, INCHES)
         wait(5, MSEC)
-    # front sensor
 
+# Function: Oscillates robot left and right continuously
 def twist():
     global myVariable, message1
     drivetrain.set_drive_velocity(100, PERCENT)
@@ -70,36 +71,32 @@ def twist():
         drivetrain.turn_for(RIGHT, 95, DEGREES)
         drivetrain.turn_for(LEFT, 95, DEGREES)
         wait(5, MSEC)
-    #
 
+# Function: Turns robot right if object is detected by right sensor
 def turn_right():
     global myVariable, message1
     while True:
         if distance_20.is_object_detected():
             drivetrain.turn_for(RIGHT, 90, DEGREES)
         wait(5, MSEC)
-    # right sensor
 
+# Function: Turns robot around if object is detected at the back
 def turn_around():
     global myVariable, message1
     while True:
         if distance_8.is_object_detected():
             drivetrain.turn_for(RIGHT, 180, DEGREES)
         wait(5, MSEC)
-    # back sensor
 
+# Function: Turns robot left if object is detected by left sensor
 def turn_left():
     global myVariable, message1
     while True:
         if distance_10.is_object_detected():
             drivetrain.turn_for(LEFT, 90, DEGREES)
         wait(5, MSEC)
-    # left sensor
 
-
-myVariable = 0
-flipbot = Event()
-
+# Function: Flips an object if it is within 300 mm of the front sensor
 def flip():
     global myVariable, flipbot
     motor_group_7.set_max_torque(300, PERCENT)
@@ -110,11 +107,21 @@ def flip():
             motor_group_7.stop()
         wait(5, MSEC)
 
+# NEW FUNCTION: Uses line sensor to detect dark line and turn around
+def avoid_line():
+    while True:
+        # If the reflectivity drops below 30, we assume it's over a line
+        if line_sensor.reflectivity() < 30:
+            drivetrain.turn_for(RIGHT, 180, DEGREES)
+        wait(5, MSEC)
 
+# Launch concurrent behavior threads
+ws2 = Thread(twist)
+ws3 = Thread(turn_right)
+ws4 = Thread(turn_around)
+ws5 = Thread(turn_left)
+ws6 = Thread(flip)
+ws7 = Thread(avoid_line)  # NEW: Run the line-avoidance behavior
 
-ws2 = Thread( twist )
-ws3 = Thread( turn_right )
-ws4 = Thread( turn_around )
-ws5 = Thread( turn_left )
-ws6 = Thread( flip )
+# Start main driving loop
 forward()
