@@ -2,37 +2,32 @@
 from vex import *
 import urandom
 
-# Brain should be defined by default
-brain=Brain()
+# Brain object is created to interact with the VEX brain's screen, battery, etc.
+brain = Brain()
 
-# Robot configuration code
+# Robot configuration code (this section would usually include setup for motors/sensors)
 
-
-# wait for rotation sensor to fully initialize
+# Wait to ensure rotation sensor (if any) is initialized before proceeding
 wait(30, MSEC)
 
-
-# Make random actually random
+# Function to create a more randomized seed for urandom
 def initializeRandomSeed():
-    wait(100, MSEC)
+    wait(100, MSEC)  # Wait briefly to help vary the seed
+    # Combine battery voltage, battery current, and high-res system time to generate a seed
     random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
-    urandom.seed(int(random))
-      
-# Set random seed 
+    urandom.seed(int(random))  # Seed the random number generator
+
+# Call the seed initialization
 initializeRandomSeed()
 
-
+# Function to play a sound using the V5 Brain (prints a special command understood by VEXCode)
 def play_vexcode_sound(sound_name):
-    # Helper to make playing sounds from the V5 in VEXcode easier and
-    # keeps the code cleaner by making it clear what is happening.
     print("VEXPlaySound:" + sound_name)
     wait(5, MSEC)
 
-# add a small delay to make sure we don't print in the middle of the REPL header
+# Clear the REPL console for clean output
 wait(200, MSEC)
-# clear the console to make sure we don't have the REPL in the console
 print("\033[2J")
-
 #endregion VEXcode Generated Robot Configuration
 
 # ------------------------------------------
@@ -44,77 +39,79 @@ print("\033[2J")
 # 
 # ------------------------------------------
 
-# Library imports
+# Library imports (redundant here but often used for clarity in VEX projects)
 from vex import *
 
 # Begin project code
-myVariable = 0
-message1 = Event()
+myVariable = 0  # Global variable (unused in logic shown)
+message1 = Event()  # Event placeholder (not triggered in shown code)
 
+# Function: Moves robot forward if an object is detected in front
 def forward():
     global myVariable, message1
     wait(0.1, SECONDS)
     while True:
-        if distance_9.is_object_detected():
-            drivetrain.stop()
+        if distance_9.is_object_detected():  # Uses front distance sensor
+            drivetrain.stop()  # Stop movement when object is detected
             wait(0.1, SECONDS)
-            drivetrain.drive_for(FORWARD, 24, INCHES)
+            drivetrain.drive_for(FORWARD, 24, INCHES)  # Drive forward 24 inches
         wait(5, MSEC)
-    # front sensor
 
+# Function: Oscillates robot left and right continuously
 def twist():
     global myVariable, message1
-    drivetrain.set_drive_velocity(100, PERCENT)
-    drivetrain.set_turn_velocity(200, RPM)
+    drivetrain.set_drive_velocity(100, PERCENT)  # Set drive speed
+    drivetrain.set_turn_velocity(200, RPM)       # Set turn speed
     while True:
-        drivetrain.turn_for(RIGHT, 95, DEGREES)
-        drivetrain.turn_for(LEFT, 95, DEGREES)
+        drivetrain.turn_for(RIGHT, 95, DEGREES)   # Turn right slightly more than 90 degrees
+        drivetrain.turn_for(LEFT, 95, DEGREES)    # Then turn left the same amount
         wait(5, MSEC)
-    #
 
+# Function: Turns robot right if object is detected by right sensor
 def turn_right():
     global myVariable, message1
     while True:
-        if distance_20.is_object_detected():
-            drivetrain.turn_for(RIGHT, 90, DEGREES)
+        if distance_20.is_object_detected():  # Uses right-facing distance sensor
+            drivetrain.turn_for(RIGHT, 90, DEGREES)  # Turn right 90 degrees
         wait(5, MSEC)
-    # right sensor
 
+# Function: Turns robot around (180°) if object is detected at the back
 def turn_around():
     global myVariable, message1
     while True:
-        if distance_8.is_object_detected():
-            drivetrain.turn_for(RIGHT, 180, DEGREES)
+        if distance_8.is_object_detected():  # Uses rear-facing distance sensor
+            drivetrain.turn_for(RIGHT, 180, DEGREES)  # Turn completely around
         wait(5, MSEC)
-    # back sensor
 
+# Function: Turns robot left if object is detected by left sensor
 def turn_left():
     global myVariable, message1
     while True:
-        if distance_10.is_object_detected():
-            drivetrain.turn_for(LEFT, 90, DEGREES)
+        if distance_10.is_object_detected():  # Uses left-facing distance sensor
+            drivetrain.turn_for(LEFT, 90, DEGREES)  # Turn left 90 degrees
         wait(5, MSEC)
-    # left sensor
 
-
+# Another global event and variable setup
 myVariable = 0
 flipbot = Event()
 
+# Function: Controls a motor group to "flip" an object if one is close in front
 def flip():
     global myVariable, flipbot
-    motor_group_7.set_max_torque(300, PERCENT)
+    motor_group_7.set_max_torque(300, PERCENT)  # Set high torque for strong movement
     while True:
-        if distance_9.object_distance(MM) < 300:
-            motor_group_7.spin_for(FORWARD, 180, DEGREES)
-            motor_group_7.spin_for(REVERSE, 180, DEGREES)
-            motor_group_7.stop()
+        if distance_9.object_distance(MM) < 300:  # Check if object is within 300 mm
+            motor_group_7.spin_for(FORWARD, 180, DEGREES)   # Flip forward
+            motor_group_7.spin_for(REVERSE, 180, DEGREES)   # Flip back
+            motor_group_7.stop()  # Stop motor after action
         wait(5, MSEC)
 
+# Launch various behaviors as background threads
+ws2 = Thread(twist)         # Oscillating motion
+ws3 = Thread(turn_right)    # Right sensor logic
+ws4 = Thread(turn_around)   # Rear sensor logic
+ws5 = Thread(turn_left)     # Left sensor logic
+ws6 = Thread(flip)          # Flip object if close
 
-
-ws2 = Thread( twist )
-ws3 = Thread( turn_right )
-ws4 = Thread( turn_around )
-ws5 = Thread( turn_left )
-ws6 = Thread( flip )
+# Start the main forward movement function (runs in the main thread)
 forward()
