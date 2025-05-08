@@ -55,7 +55,7 @@ def forward():
     global myVariable, message1
     wait(0.1, SECONDS)
     while True:
-        if distance_9.is_object_detected():
+        if distance_5.is_object_detected():
             drivetrain.stop()
             wait(0.1, SECONDS)
             drivetrain.drive_for(FORWARD, 24, INCHES)
@@ -104,7 +104,7 @@ def flip():
     global myVariable, flipbot
     motor_group_7.set_max_torque(300, PERCENT)
     while True:
-        if distance_9.object_distance(MM) < 300:
+        if distance_5.object_distance(MM) < 300:
             motor_group_7.spin_for(FORWARD, 180, DEGREES)
             motor_group_7.spin_for(REVERSE, 180, DEGREES)
             motor_group_7.stop()
